@@ -6,6 +6,7 @@ from flask_cors import CORS
 import requests
 import logging
 from datetime import datetime
+from datetime import timezone
 
 DATABASE = os.path.join(os.path.dirname(__file__), "vocab.db")
 DICTIONARY_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
@@ -37,6 +38,7 @@ def home():
 
 @app.route("/lookup", methods=["POST"])
 def lookup():
+    db = get_db()
     data = request.get_json()
     word = data.get("word", "").strip()
     logging.debug(word)
@@ -62,9 +64,17 @@ def lookup():
     except (KeyError, IndexError, TypeError):
         return jsonify({"error": "Unexpected response format"}), 500
 
+    saved_rows = db.execute(
+        "SELECT definition FROM words WHERE word = ?", (word,)
+    ).fetchall()
+    saved_defs = [d["definition"] for d in saved_rows]
+
+    print("Saved definitions:", saved_defs)
+
     return jsonify({
         "word": word,
-        "definitions": definitions
+        "definitions": definitions,
+        "savedDefinitions": saved_defs
     })
 
 
@@ -78,6 +88,12 @@ def add_word():
     if not word or not definitions:
         return jsonify({"error": "Missing word or definitions"}), 400
 
+    # Remove existing definitions if they exist
+    db.execute(
+        "DELETE FROM words WHERE word = ?",
+        (word,)
+    )
+
     added_count = 0
     for d in definitions:
         definition = d.get("definition", "")
@@ -85,8 +101,8 @@ def add_word():
 
         try:
             db.execute(
-                "INSERT OR IGNORE INTO words (word, definition, example, date_added) VALUES (?, ?, ?, ?)",
-                (word, definition, example, datetime.utcnow().isoformat())
+                "INSERT INTO words (word, definition, example, date_added) VALUES (?, ?, ?, ?)",
+                (word, definition, example, datetime.now(timezone.utc).isoformat())
             )
             added_count += 1
         except Exception as e:
@@ -116,7 +132,7 @@ def log_practice():
     if word_id is None or correct is None:
         return jsonify({"error": "Missing word_id or correct"}), 400
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     # First try to update existing row
     update_query = """
