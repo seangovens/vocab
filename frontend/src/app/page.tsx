@@ -61,27 +61,31 @@ export default function PracticePage() {
     }, []);
 
     return (
-        <Stack spacing={3}>
-        <Typography variant="h4">Practice</Typography>
+        <Stack spacing={3} >
+        <Typography variant='h4' >Practice</Typography>
 
         {loading && <CircularProgress />}
-        {error && <Alert severity="error">{error}</Alert>}
+        {error && <Alert severity='error' >{error}</Alert>}
 
         {word && (
-            <Paper elevation={3} sx={{ padding: 3 }}>
-                <Typography variant="body1" gutterBottom>
+            <Paper elevation={3} >
+                <Typography
+                    variant='body1'
+                    gutterBottom >
                     {word.definition}
                 </Typography>
-                {word.example && (
-                    <Typography variant="body2" color="text.secondary">
-                    Example: {word.example}
+                {
+                (word.example && showAnswer) && (
+                    <Typography variant='body2' color='text.secondary' >
+                        Example: {word.example}
                     </Typography>
-                )}
+                )
+                }
 
                 {showAnswer ? (
                     <>
                     <Typography variant='h6' >
-                        ✅ The word was: <strong>{word.word}</strong>
+                        The word was: <strong>{word.word}</strong>
                     </Typography>
                     <Stack
                         direction='row'
