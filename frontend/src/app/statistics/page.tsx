@@ -48,6 +48,7 @@ export default function StatsPage() {
 
         const maxIncorrect = d3.max(data, (d: PracticeStat) => d.incorrect) || 1;
         const maxCorrect = d3.max(data, (d: PracticeStat) => d.correct) || 1;
+        const maxBoth = Math.max(maxIncorrect, maxCorrect);
 
         const ctxtWord = document.createElement('canvas').getContext('2d');
         const ctxtPractice = document.createElement('canvas').getContext('2d');
@@ -77,7 +78,7 @@ export default function StatsPage() {
         console.log('Max label width:', maxLabelWidth);
 
         const xScale = d3.scaleLinear()
-            .domain([-maxIncorrect, maxCorrect])
+            .domain([-maxBoth, maxBoth])
             .range([0, width]);
         const yScale = (i: number) => i*barHeight;
         const rowPad = 2;
@@ -87,7 +88,7 @@ export default function StatsPage() {
             .enter()
             .append('rect')
             .attr('class', 'bar-incorrect')
-            .attr('x', (d: PracticeStat) => xScale(-d.incorrect) - (maxLabelWidth / 2))
+            .attr('x', (d: PracticeStat) => xScale(-d.incorrect))
             .attr('y', (_: any, i: number) => yScale(i*rowPad))
             .attr('width', (d: PracticeStat) => xScale(d.incorrect) - xScale(0) - (maxLabelWidth / 2))
             .attr('height', barHeight)

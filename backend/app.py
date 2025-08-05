@@ -171,8 +171,9 @@ def get_stats():
     db = get_db()
 
     practice_stats_rows = db.execute("""
-        SELECT DISTINCT word, incorrect, correct
+        SELECT word, SUM(incorrect) as incorrect, SUM(correct) as correct
         FROM practice_logs JOIN words ON practice_logs.word_id = words.id
+        GROUP BY word
         ORDER BY (incorrect + correct) DESC
     """).fetchall()
     practice_stats = [
