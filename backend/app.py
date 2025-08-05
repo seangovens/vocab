@@ -40,7 +40,7 @@ def home():
 def lookup():
     db = get_db()
     data = request.get_json()
-    word = data.get("word", "").strip()
+    word = data.get("word", "").strip().lower()
     logging.debug(word)
 
     if not word:
@@ -82,7 +82,7 @@ def lookup():
 def add_word():
     db = get_db()
     data = request.get_json()
-    word = data.get("word")
+    word = data.get("word").strip().lower()
     definitions = data.get("definitions", [])
 
     if not word or not definitions:
@@ -171,7 +171,7 @@ def get_stats():
     db = get_db()
 
     practice_stats_rows = db.execute("""
-        SELECT word, incorrect, correct
+        SELECT DISTINCT word, incorrect, correct
         FROM practice_logs JOIN words ON practice_logs.word_id = words.id
         ORDER BY (incorrect + correct) DESC
     """).fetchall()
@@ -186,7 +186,7 @@ def get_stats():
     print(practice_stats)
 
     # Get total word count
-    word_count = db.execute("SELECT COUNT(*) FROM words").fetchone()[0]
+    word_count = db.execute("SELECT COUNT(DISTINCT word) FROM words").fetchone()[0]
 
     # Get streak
     streak = db.execute("""

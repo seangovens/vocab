@@ -46,7 +46,7 @@ export default function AddPage() {
             else {
                 setDefinitions(data.definitions);
                 console.log(data);
-                if (data['savedDefinitions']) {
+                if (data['savedDefinitions'].length > 0) {
                     setEditing(true);
                     setSelectedIndices(
                         data.savedDefinitions.map((d: string) =>

@@ -80,21 +80,32 @@ export default function PracticePage() {
 
                 {showAnswer ? (
                     <>
-                    <Typography variant="h6" sx={{ mt: 2 }}>
+                    <Typography variant='h6' >
                         ✅ The word was: <strong>{word.word}</strong>
                     </Typography>
-                    <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                        <Button variant="contained" color="success" onClick={() => logResult(true)}>
-                        I got it right
+                    <Stack
+                        direction='row'
+                        spacing={2} >
+                        <Button
+                            variant='contained'
+                            color='success'
+                            onClick={() => logResult(true)} >
+                            I got it right
                         </Button>
-                        <Button variant="outlined" color="error" onClick={() => logResult(false)}>
-                        I got it wrong
+                        <Button
+                            variant='outlined'
+                            color='error'
+                            onClick={() => logResult(false)} >
+                            I got it wrong
                         </Button>
                     </Stack>
                     </>
                 ) : (
-                    <Button variant="contained" sx={{ mt: 2 }} onClick={() => setShowAnswer(true)}>
-                    Reveal
+                    <Button
+                        variant='contained'
+                        color='primary'
+                        onClick={() => setShowAnswer(true)} >
+                        Reveal
                     </Button>
                 )}
             </Paper>

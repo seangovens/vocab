@@ -41,26 +41,55 @@ export default function StatsPage() {
 
         const data = practiceStats.slice(0, 10);
         const svg = d3.select(chartRef.current)
-            .append('svg')
+            .select('#practice-stats-svg')
             .attr('width', '100%')
-            .attr('height', height);
+            .attr('height', height)
+            .attr('viewBox', `0 0 ${width} ${height}`);
 
         const maxIncorrect = d3.max(data, (d: PracticeStat) => d.incorrect) || 1;
         const maxCorrect = d3.max(data, (d: PracticeStat) => d.correct) || 1;
+
+        const ctxtWord = document.createElement('canvas').getContext('2d');
+        const ctxtPractice = document.createElement('canvas').getContext('2d');
+        let maxLabelWidth = 0;
+        if (ctxtWord) {
+            // TODO do not hardcode font
+            ctxtWord.font = '14px Arial';
+            data.forEach((d: PracticeStat) => {
+                const width = ctxtWord.measureText(d.word).width;
+                if (width > maxLabelWidth) {
+                    maxLabelWidth = width;
+                }
+            });
+        }
+        if (ctxtPractice) {
+            // TODO do not hardcode font
+            ctxtPractice.font = '12px Arial';
+            data.forEach((d: PracticeStat) => {
+                const width = ctxtPractice.measureText(`practiced ${d.correct + d.incorrect} times`).width;
+                if (width > maxLabelWidth) {
+                    maxLabelWidth = width;
+                }
+            });
+        }
+        maxLabelWidth += 20; // Add some padding
+
+        console.log('Max label width:', maxLabelWidth);
 
         const xScale = d3.scaleLinear()
             .domain([-maxIncorrect, maxCorrect])
             .range([0, width]);
         const yScale = (i: number) => i*barHeight;
+        const rowPad = 2;
 
         svg.selectAll('.bar-incorrect')
             .data(data)
             .enter()
             .append('rect')
             .attr('class', 'bar-incorrect')
-            .attr('x', (d: PracticeStat) => xScale(-d.incorrect))
-            .attr('y', (_: any, i: number) => yScale(i))
-            .attr('width', (d: PracticeStat) => xScale(d.incorrect) - xScale(0))
+            .attr('x', (d: PracticeStat) => xScale(-d.incorrect) - (maxLabelWidth / 2))
+            .attr('y', (_: any, i: number) => yScale(i*rowPad))
+            .attr('width', (d: PracticeStat) => xScale(d.incorrect) - xScale(0) - (maxLabelWidth / 2))
             .attr('height', barHeight)
             .attr('fill', '#c4463dff');
 
@@ -69,9 +98,9 @@ export default function StatsPage() {
             .enter()
             .append('rect')
             .attr('class', 'bar-correct')
-            .attr('x', (d: PracticeStat) => xScale(0))
-            .attr('y', (_: any, i: number) => yScale(i))
-            .attr('width', (d: PracticeStat) => xScale(d.correct) - xScale(0))
+            .attr('x', (d: PracticeStat) => xScale(0) + (maxLabelWidth / 2))
+            .attr('y', (_: any, i: number) => yScale(i*rowPad))
+            .attr('width', (d: PracticeStat) => xScale(d.correct) - xScale(0) - (maxLabelWidth / 2))
             .attr('height', barHeight)
             .attr('fill', '#41aa4dff');
 
@@ -81,9 +110,10 @@ export default function StatsPage() {
             .append('text')
             .attr('class', 'word-label')
             .attr('x', xScale(0))
-            .attr('y', (_: any, i: number) => yScale(i) + barHeight / 2)
+            .attr('y', (_: any, i: number) => yScale(i*rowPad) + barHeight / 2)
             .attr('text-anchor', 'middle')
             .style('font-size', '14px')
+            .style('fill', 'var(--foreground)')
             .text((d: PracticeStat) => d.word);
 
         svg.selectAll('.practice-label')
@@ -92,61 +122,68 @@ export default function StatsPage() {
             .append('text')
             .attr('class', 'practice-label')
             .attr('x', xScale(0))
-            .attr('y', (_: any, i: number) => yScale(i) + barHeight / 2 + 20)
+            .attr('y', (_: any, i: number) => yScale(i*rowPad) + barHeight / 2 + 20)
             .attr('text-anchor', 'middle')
             .style('font-size', '12px')
+            .style('fill', 'var(--foreground)')
             .text((d: PracticeStat) => `practiced ${d.correct + d.incorrect} times`);
     }, [practiceStats]);
 
     return (
         <Box>
-            <Typography variant="h4" align="center" gutterBottom>
+            <Typography
+                variant='h4'
+                align='center'
+                gutterBottom >
                 Vocabulary Statistics
             </Typography>
 
             {/* Summary boxes */}
             <Grid
-                container spacing={3}
-                justifyContent="center" >
+                container
+                spacing={3}
+                justifyContent='center' >
                 <Grid>
                     <Paper>
-                        <Typography variant="h5">Streak</Typography>
+                        <Typography variant='h5' >Streak</Typography>
                         <Typography
-                            variant="h3"
-                            color="primary">
+                            variant='h3'
+                            color='primary' >
                             {summary ? summary.streak : '--'}
                         </Typography>
-                        <Typography variant="body2">days in a row</Typography>
+                        <Typography variant='body2' >days in a row</Typography>
                     </Paper>
                 </Grid>
                 <Grid>
                     <Paper>
-                        <Typography variant="h5">Words</Typography>
+                        <Typography variant='h5' >Words</Typography>
                         <Typography
-                            variant="h3"
-                            color="primary">
+                            variant='h3'
+                            color='primary' >
                             {summary ? summary.wordCount : '--'}
                         </Typography>
-                        <Typography variant="body2">in database</Typography>
+                        <Typography variant='body2' >in database</Typography>
                     </Paper>
                 </Grid>
                 <Grid>
                     <Paper>
                         <Typography variant="h5">Most Recent</Typography>
                         <Typography
-                            variant="h6"
-                            color="secondary">
+                            variant='h6'
+                            color='secondary' >
                             {summary ? summary.mostRecent : '--'}
                         </Typography>
-                        <Typography variant="body2">last added</Typography>
+                        <Typography variant='body2' >last added</Typography>
                     </Paper>
                 </Grid>
             </Grid>
 
             {/* Practice stats chart */}
             <Box
-                id='practice-stats-chart'
-                ref={chartRef} />
+                ref={chartRef}
+                id='practice-stats-chart' >
+                <svg id='practice-stats-svg' />
+            </Box>
         </Box>
     );
 }
