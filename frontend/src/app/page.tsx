@@ -28,7 +28,7 @@ export default function PracticePage() {
         setShowAnswer(false);
         setError('');
         try {
-            const res = await fetch('http://localhost:5000/words/practice');
+            const res = await fetch('http://localhost:5000/getrandom');
             const data = await res.json();
             if (!res.ok) {
                 setError(data.error || 'Error loading word');

@@ -113,7 +113,7 @@ def add_word():
     return jsonify({"status": "success", "definitions_added": added_count})
 
 
-@app.route("/words/practice", methods=["GET"])
+@app.route("/getrandom", methods=["GET"])
 def get_random_word():
     db = get_db()
     row = db.execute("SELECT * FROM words ORDER BY RANDOM() LIMIT 1").fetchone()
@@ -164,3 +164,51 @@ def log_practice():
 
     db.commit()
     return jsonify({"status": "logged"})
+
+
+@app.route("/stats", methods=["GET"])
+def get_stats():
+    db = get_db()
+
+    practice_stats_rows = db.execute("""
+        SELECT word, incorrect, correct
+        FROM practice_logs JOIN words ON practice_logs.word_id = words.id
+        ORDER BY (incorrect + correct) DESC
+    """).fetchall()
+    practice_stats = [
+        {
+            "word": d["word"],
+            "incorrect": d["incorrect"],
+            "correct": d["correct"]
+        } for d in practice_stats_rows]
+
+    print("Here are practice stats:")
+    print(practice_stats)
+
+    # Get total word count
+    word_count = db.execute("SELECT COUNT(*) FROM words").fetchone()[0]
+
+    # Get streak
+    streak = db.execute("""
+        SELECT COUNT(*) FROM (
+            SELECT date_added,
+                   DATE(date_added, 'now', '-1 day') AS yesterday
+            FROM words
+            WHERE date_added >= DATE('now', '-30 days')
+            GROUP BY date_added
+        )
+        WHERE date_added = yesterday
+    """).fetchone()[0]
+
+    # Get most recent word added
+    most_recent = db.execute("SELECT word FROM words ORDER BY date_added DESC LIMIT 1").fetchone()
+    most_recent_word = most_recent["word"] if most_recent else None
+
+    return jsonify({
+        "practiceStats": practice_stats,
+        "summary": {
+            "streak": streak,
+            "wordCount": word_count,
+            "mostRecent": most_recent_word
+        }
+    })
