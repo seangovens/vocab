@@ -4,7 +4,6 @@ cryptography==3.4.8
 cycler==0.12.1
 dbus-python==1.2.18
 distro==1.7.0
-distro-info==1.1+ubuntu0.1
 fonttools==4.55.0
 gunicorn==23.0.0
 httplib2==0.20.2
