@@ -22,7 +22,7 @@ export default function StatsPage() {
     const chartRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        fetch('http://localhost:5000/stats')
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/stats`)
             .then(res => res.json())
             .then((data) => {
                 console.log('Here is the practice data:');

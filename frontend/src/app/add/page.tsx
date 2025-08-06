@@ -33,7 +33,7 @@ export default function AddPage() {
         setEditing(false);
 
         try {
-            const res = await fetch('http://localhost:5000/lookup', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lookup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ word }),
@@ -79,7 +79,7 @@ export default function AddPage() {
         setError('');
 
         try {
-            const res = await fetch('http://localhost:5000/add', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/add`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

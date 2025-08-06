@@ -19,6 +19,7 @@ yarn-error.log*
 .pnpm-debug.log*
 .DS_Store
 *.pem
+.env.local
 
 backend/venv
 backend/__pycache__

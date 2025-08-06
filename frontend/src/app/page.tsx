@@ -28,7 +28,7 @@ export default function PracticePage() {
         setShowAnswer(false);
         setError('');
         try {
-            const res = await fetch('http://localhost:5000/getrandom');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getrandom`);
             const data = await res.json();
             if (!res.ok) {
                 setError(data.error || 'Error loading word');
@@ -48,7 +48,7 @@ export default function PracticePage() {
 
     const logResult = async (correct: boolean) => {
         if (!word) return;
-        await fetch('http://localhost:5000/practice', {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/practice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ word_id: word.id, correct }),
