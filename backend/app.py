@@ -1,5 +1,6 @@
 import os
-import sqlite3
+import psycopg2
+import psycopg2.extras
 from flask import g
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -8,7 +9,9 @@ import logging
 from datetime import datetime
 from datetime import timezone
 
-DATABASE = os.path.join(os.path.dirname(__file__), "vocab.db")
+# from dotenv import load_dotenv
+# load_dotenv()
+
 DICTIONARY_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
 logging.basicConfig(level=logging.DEBUG)
@@ -19,8 +22,10 @@ CORS(app)
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(DATABASE)
-        g.db.row_factory = sqlite3.Row
+        g.db = psycopg2.connect(
+            os.environ["DATABASE_URL"],
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
     return g.db
 
 
@@ -64,9 +69,11 @@ def lookup():
     except (KeyError, IndexError, TypeError):
         return jsonify({"error": "Unexpected response format"}), 500
 
-    saved_rows = db.execute(
-        "SELECT definition FROM words WHERE word = ?", (word,)
-    ).fetchall()
+    cur = db.cursor()
+    cur.execute(
+        "SELECT definition FROM words WHERE word = %s", (word,)
+    )
+    saved_rows = cur.fetchall()
     saved_defs = [d["definition"] for d in saved_rows]
 
     print("Saved definitions:", saved_defs)
@@ -88,9 +95,10 @@ def add_word():
     if not word or not definitions:
         return jsonify({"error": "Missing word or definitions"}), 400
 
+    cur = db.cursor()
     # Remove existing definitions if they exist
-    db.execute(
-        "DELETE FROM words WHERE word = ?",
+    cur.execute(
+        "DELETE FROM words WHERE word = %s",
         (word,)
     )
 
@@ -100,8 +108,8 @@ def add_word():
         example = d.get("example", "")
 
         try:
-            db.execute(
-                "INSERT INTO words (word, definition, example, date_added) VALUES (?, ?, ?, ?)",
+            cur.execute(
+                "INSERT INTO words (word, definition, example, date_added) VALUES (%s, %s, %s, %s)",
                 (word, definition, example, datetime.now(timezone.utc).isoformat())
             )
             added_count += 1
@@ -116,7 +124,9 @@ def add_word():
 @app.route("/getrandom", methods=["GET"])
 def get_random_word():
     db = get_db()
-    row = db.execute("SELECT * FROM words ORDER BY RANDOM() LIMIT 1").fetchone()
+    cur = db.cursor()
+    cur.execute("SELECT * FROM words ORDER BY RANDOM() LIMIT 1")
+    row = cur.fetchone()
     if row:
         return jsonify(dict(row))
     return jsonify({"error": "No words available"}), 404
@@ -134,33 +144,22 @@ def log_practice():
 
     now = datetime.now(timezone.utc).isoformat()
 
+    cur = db.cursor()
     # First try to update existing row
-    update_query = """
+    cur.execute("""
         UPDATE practice_logs
-        SET last_seen = ?,
-            correct = correct + ?,
-            incorrect = incorrect + ?
-        WHERE word_id = ?
-    """
-    result = db.execute(update_query, (
-        now,
-        int(correct),
-        int(not correct),
-        word_id
-    ))
+        SET last_seen = %s,
+            correct = correct + %s,
+            incorrect = incorrect + %s
+        WHERE word_id = %s
+    """, (now, int(correct), int(not correct), word_id))
 
     # If no rows were updated (first attempt), insert a new row
-    if result.rowcount == 0:
-        insert_query = """
+    if cur.rowcount == 0:
+        cur.execute("""
             INSERT INTO practice_logs (word_id, last_seen, correct, incorrect)
-            VALUES (?, ?, ?, ?)
-        """
-        db.execute(insert_query, (
-            word_id,
-            now,
-            int(correct),
-            int(not correct)
-        ))
+            VALUES (%s, %s, %s, %s)
+        """, (word_id, now, int(correct), int(not correct)))
 
     db.commit()
     return jsonify({"status": "logged"})
@@ -170,12 +169,14 @@ def log_practice():
 def get_stats():
     db = get_db()
 
-    practice_stats_rows = db.execute("""
+    cur = db.cursor()
+    cur.execute("""
         SELECT word, SUM(incorrect) as incorrect, SUM(correct) as correct
         FROM practice_logs JOIN words ON practice_logs.word_id = words.id
         GROUP BY word
-        ORDER BY (incorrect + correct) DESC
-    """).fetchall()
+        ORDER BY (SUM(incorrect) + SUM(correct)) DESC
+    """)
+    practice_stats_rows = cur.fetchall()
     practice_stats = [
         {
             "word": d["word"],
@@ -187,22 +188,56 @@ def get_stats():
     print(practice_stats)
 
     # Get total word count
-    word_count = db.execute("SELECT COUNT(DISTINCT word) FROM words").fetchone()[0]
+    cur.execute("SELECT COUNT(DISTINCT word) FROM words")
+    word_count = cur.fetchone()["count"]
+
+    print("Here is the word count:")
+    print(word_count)
 
     # Get streak
-    streak = db.execute("""
-        SELECT COUNT(*) FROM (
-            SELECT date_added,
-                   DATE(date_added, 'now', '-1 day') AS yesterday
+    cur.execute("""
+        WITH days AS (
+            SELECT DISTINCT date(date_added AT TIME ZONE 'UTC') AS day
             FROM words
-            WHERE date_added >= DATE('now', '-30 days')
-            GROUP BY date_added
+            WHERE date_added >= NOW() - INTERVAL '30 days'
+        ),
+        numbered AS (
+            SELECT
+                day,
+                ROW_NUMBER() OVER (ORDER BY day DESC) AS rn
+            FROM days
+        ),
+        streaks AS (
+            SELECT
+                MIN(day) AS streak_start,
+                MAX(day) AS streak_end,
+                COUNT(*) AS streak_length
+            FROM (
+                SELECT
+                    day,
+                    rn,
+                    day - (rn || ' days')::interval AS grp
+                FROM numbered
+            ) sub
+            GROUP BY grp
         )
-        WHERE date_added = yesterday
-    """).fetchone()[0]
+        SELECT streak_length
+        FROM streaks
+        WHERE streak_end = CURRENT_DATE
+        ORDER BY streak_length DESC
+        LIMIT 1
+    """)
+    streak_row = cur.fetchone()
+    streak = 0
+    if streak_row and "streak_length" in streak_row:
+        streak = streak_row["streak_length"]
+
+    print("Here is the streak:")
+    print(streak)
 
     # Get most recent word added
-    most_recent = db.execute("SELECT word FROM words ORDER BY date_added DESC LIMIT 1").fetchone()
+    cur.execute("SELECT word FROM words ORDER BY date_added DESC LIMIT 1")
+    most_recent = cur.fetchone()
     most_recent_word = most_recent["word"] if most_recent else None
 
     return jsonify({
