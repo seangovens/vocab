@@ -10,7 +10,7 @@ import {
     Alert,
 } from '@mui/material';
 
-type WordEntry = {
+export type WordEntry = {
     id: number;
     word: string;
     definition: string;

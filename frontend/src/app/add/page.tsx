@@ -15,10 +15,11 @@ import {
     Snackbar,
 } from '@mui/material';
 import { Check } from '@mui/icons-material';
+import { WordEntry } from '../page';
 
 export default function AddPage() {
     const [word, setWord] = useState('');
-    const [definitions, setDefinitions] = useState<any[]>([]);
+    const [definitions, setDefinitions] = useState<WordEntry[]>([]);
     const [loading, setLoading] = useState(false);
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState('');
@@ -51,7 +52,7 @@ export default function AddPage() {
                     setSelectedIndices(
                         data.savedDefinitions.map((d: string) =>
                             data.definitions.findIndex(
-                                (def: any) => def.definition === d
+                                (def: WordEntry) => def.definition === d
                             )
                         ).filter((i: number) => i !== -1)
                     );
