@@ -18,23 +18,27 @@ export type WordEntry = {
 };
 
 export default function PracticePage() {
+    const [responses, setResponses] = useState<string[]>([]);
+    const [selected, setSelected] = useState<string | null>(null);
     const [word, setWord] = useState<WordEntry | null>(null);
-    const [showAnswer, setShowAnswer] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const fetchWord = async () => {
+    const fetchWords = async () => {
         setLoading(true);
-        setShowAnswer(false);
+        setSelected(null);
         setError('');
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getrandom`);
             const data = await res.json();
             if (!res.ok) {
-                setError(data.error || 'Error loading word');
+                setError(data.error || 'Error loading words');
                 setWord(null);
             } else {
-                setWord(data);
+                // Generate a random index in data to select correct word
+                const correctIndex = Math.floor(Math.random() * data.length);
+                setWord(data[correctIndex]);
+                setResponses(data.map((entry: WordEntry) => entry.word));
             }
         } 
         catch (e) {
@@ -46,18 +50,19 @@ export default function PracticePage() {
         }
     };
 
-    const logResult = async (correct: boolean) => {
+    const handleResponse = async (resp: string) => {
         if (!word) return;
+        setSelected(resp);
+        const correct = resp === word.word;
         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/practice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ word_id: word.id, correct }),
         });
-        fetchWord();
-    };
+    }
 
     useEffect(() => {
-        fetchWord();
+        fetchWords();
     }, []);
 
     return (
@@ -74,44 +79,39 @@ export default function PracticePage() {
                     gutterBottom >
                     {word.definition}
                 </Typography>
+
+                {/* Only show example if it exists and answer is revealed */}
                 {
-                (word.example && showAnswer) && (
-                    <Typography variant='body2' color='text.secondary' >
-                        Example: {word.example}
-                    </Typography>
-                )
+                (word.example && selected != null) &&
+                <Typography variant='body2' color='text.secondary' >
+                    Example: {word.example}
+                </Typography>
                 }
 
-                {showAnswer ? (
-                    <>
-                    <Typography variant='h6' >
-                        The word was: <strong>{word.word}</strong>
-                    </Typography>
-                    <Stack
-                        direction='row'
-                        spacing={2} >
+                <Stack
+                    direction='row'
+                    spacing={1}
+                    flexWrap='wrap' >
+                    {responses.map((resp, i) => (
                         <Button
-                            variant='contained'
-                            color='success'
-                            onClick={() => logResult(true)} >
-                            I got it right
+                            key={i}
+                            variant={selected === resp ? 'contained' : 'outlined'}
+                            color={selected != null ? 
+                                (selected === resp ? 'success' : 'error') : 'primary'}
+                            onClick={() => handleResponse(resp)}
+                            disabled={selected != null} >
+                            {resp}
                         </Button>
-                        <Button
-                            variant='outlined'
-                            color='error'
-                            onClick={() => logResult(false)} >
-                            I got it wrong
-                        </Button>
-                    </Stack>
-                    </>
-                ) : (
-                    <Button
-                        variant='contained'
-                        color='primary'
-                        onClick={() => setShowAnswer(true)} >
-                        Reveal
-                    </Button>
-                )}
+                    ))}
+                </Stack>
+                {
+                selected != null &&
+                <Button
+                    variant='text'
+                    onClick={fetchWords} >
+                    Next
+                </Button>
+                }
             </Paper>
         )}
         </Stack>

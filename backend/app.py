@@ -122,13 +122,13 @@ def add_word():
 
 
 @app.route("/getrandom", methods=["GET"])
-def get_random_word():
+def get_random_choices():
     db = get_db()
     cur = db.cursor()
-    cur.execute("SELECT * FROM words ORDER BY RANDOM() LIMIT 1")
-    row = cur.fetchone()
-    if row:
-        return jsonify(dict(row))
+    cur.execute("SELECT * FROM words ORDER BY RANDOM() LIMIT 8")
+    rows = cur.fetchall()
+    if rows:
+        return jsonify(rows)
     return jsonify({"error": "No words available"}), 404
 
 
