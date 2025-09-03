@@ -9,8 +9,8 @@ import logging
 from datetime import datetime
 from datetime import timezone
 
-# from dotenv import load_dotenv
-# load_dotenv()
+from dotenv import load_dotenv
+load_dotenv()
 
 DICTIONARY_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 

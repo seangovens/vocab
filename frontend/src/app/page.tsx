@@ -8,6 +8,7 @@ import {
     Stack,
     CircularProgress,
     Alert,
+    useTheme,
 } from '@mui/material';
 
 export type WordEntry = {
@@ -18,6 +19,11 @@ export type WordEntry = {
 };
 
 export default function PracticePage() {
+    const theme = useTheme();
+    console.log('Theme colors:', {
+        success: theme.palette.success.main,
+        error: theme.palette.error.main
+    });
     const [responses, setResponses] = useState<string[]>([]);
     const [selected, setSelected] = useState<string | null>(null);
     const [word, setWord] = useState<WordEntry | null>(null);
@@ -96,8 +102,26 @@ export default function PracticePage() {
                         <Button
                             key={i}
                             variant={selected === resp ? 'contained' : 'outlined'}
+                            sx={{
+                                '&.MuiButton-containedSuccess': {
+                                    backgroundColor: theme.palette.success.main
+                                },
+                                '&.MuiButton-containedError': {
+                                    backgroundColor: theme.palette.error.main
+                                },
+                                // Add styles for outlined variants
+                                '&.MuiButton-outlinedSuccess': {
+                                    borderColor: theme.palette.success.main,
+                                    color: theme.palette.success.main
+                                },
+                                '&.MuiButton-outlinedError': {
+                                    borderColor: theme.palette.error.main,
+                                    color: theme.palette.error.main
+                                }
+                            }}
                             color={selected != null ? 
-                                (selected === resp ? 'success' : 'error') : 'primary'}
+                                (word.word === resp ? 'success' :
+                                    selected === resp ? 'error' : 'primary') : 'primary'}
                             onClick={() => handleResponse(resp)}
                             disabled={selected != null} >
                             {resp}

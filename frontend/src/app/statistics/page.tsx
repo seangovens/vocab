@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Grid, Paper, Typography } from '@mui/material';
+import { Box, Grid, Paper, Typography, useTheme } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
@@ -17,6 +17,7 @@ type StatsSummary = {
 };
 
 export default function StatsPage() {
+    const theme = useTheme();
     const [practiceStats, setPracticeStats] = useState<PracticeStat[]>([]);
     const [summary, setSummary] = useState<StatsSummary | null>(null);
     const chartRef = useRef<HTMLDivElement>(null);
@@ -92,7 +93,7 @@ export default function StatsPage() {
             .attr('y', (_: PracticeStat, i: number) => yScale(i*rowPad))
             .attr('width', (d: PracticeStat) => xScale(d.incorrect) - xScale(0) - (maxLabelWidth / 2))
             .attr('height', barHeight)
-            .attr('fill', 'error');
+            .attr('fill', theme.palette.error.main);
 
         svg.selectAll('.bar-correct')
             .data(data)
@@ -103,7 +104,7 @@ export default function StatsPage() {
             .attr('y', (_: PracticeStat, i: number) => yScale(i*rowPad))
             .attr('width', (d: PracticeStat) => xScale(d.correct) - xScale(0) - (maxLabelWidth / 2))
             .attr('height', barHeight)
-            .attr('fill', 'success');
+            .attr('fill', theme.palette.success.main);
 
         svg.selectAll('.word-label')
             .data(data)
