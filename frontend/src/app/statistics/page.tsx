@@ -92,7 +92,7 @@ export default function StatsPage() {
             .attr('y', (_: PracticeStat, i: number) => yScale(i*rowPad))
             .attr('width', (d: PracticeStat) => xScale(d.incorrect) - xScale(0) - (maxLabelWidth / 2))
             .attr('height', barHeight)
-            .attr('fill', '#c4463dff');
+            .attr('fill', 'error');
 
         svg.selectAll('.bar-correct')
             .data(data)
@@ -103,7 +103,7 @@ export default function StatsPage() {
             .attr('y', (_: PracticeStat, i: number) => yScale(i*rowPad))
             .attr('width', (d: PracticeStat) => xScale(d.correct) - xScale(0) - (maxLabelWidth / 2))
             .attr('height', barHeight)
-            .attr('fill', '#41aa4dff');
+            .attr('fill', 'success');
 
         svg.selectAll('.word-label')
             .data(data)
