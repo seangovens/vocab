@@ -125,7 +125,26 @@ def add_word():
 def get_random_choices():
     db = get_db()
     cur = db.cursor()
-    cur.execute("SELECT * FROM words ORDER BY RANDOM() LIMIT 8")
+    cur.execute("""
+        WITH random_definitions AS (
+            SELECT DISTINCT ON (w.word)
+                w.id,
+                w.word,
+                w.definition,
+                w.example,
+                w.date_added
+            FROM words w
+            ORDER BY w.word, RANDOM()
+        ),
+        random_words AS (
+            SELECT *
+            FROM random_definitions
+            ORDER BY RANDOM()
+            LIMIT 8
+        )
+        SELECT *
+        FROM random_words;
+    """)
     rows = cur.fetchall()
     if rows:
         return jsonify(rows)
