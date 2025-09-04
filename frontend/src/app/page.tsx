@@ -9,7 +9,10 @@ import {
     CircularProgress,
     Alert,
     useTheme,
+    Fade,
+    Box,
 } from '@mui/material';
+import { CheckCircle, HighlightOff } from '@mui/icons-material';
 
 export type WordEntry = {
     id: number;
@@ -20,10 +23,6 @@ export type WordEntry = {
 
 export default function PracticePage() {
     const theme = useTheme();
-    console.log('Theme colors:', {
-        success: theme.palette.success.main,
-        error: theme.palette.error.main
-    });
     const [responses, setResponses] = useState<string[]>([]);
     const [selected, setSelected] = useState<string | null>(null);
     const [word, setWord] = useState<WordEntry | null>(null);
@@ -79,25 +78,35 @@ export default function PracticePage() {
         {error && <Alert severity='error' >{error}</Alert>}
 
         {word && (
-            <Paper elevation={3} >
+            <Paper
+                elevation={4}
+                className='flashCard'
+                sx= {{
+                    p: { xs: 2, sm: 3 }
+                }} >
                 <Typography
                     variant='body1'
-                    gutterBottom >
+                    gutterBottom
+                    align='center' >
                     {word.definition}
                 </Typography>
 
                 {/* Only show example if it exists and answer is revealed */}
                 {
                 (word.example && selected != null) &&
-                <Typography variant='body2' color='text.secondary' >
+                <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    gutterBottom
+                    align='center' >
                     Example: {word.example}
                 </Typography>
                 }
 
                 <Stack
+                    id='responseButtons'
                     direction='row'
-                    spacing={1}
-                    flexWrap='wrap' >
+                    spacing={1} >
                     {responses.map((resp, i) => (
                         <Button
                             key={i}
@@ -128,11 +137,18 @@ export default function PracticePage() {
                         </Button>
                     ))}
                 </Stack>
+
                 {
                 selected != null &&
                 <Button
-                    variant='text'
-                    onClick={fetchWords} >
+                    id='nextButton'
+                    variant='contained'
+                    color='primary'
+                    sx={{
+                        px: 4
+                    }}
+                    onClick={fetchWords}
+                    startIcon={selected === word.word ? <CheckCircle /> : <HighlightOff />} >
                     Next
                 </Button>
                 }

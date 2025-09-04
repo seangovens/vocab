@@ -37,10 +37,10 @@ export default function StatsPage() {
         if (!practiceStats || practiceStats.length == 0 || !chartRef.current) return;
 
         const width = 700;
-        const height = 500;
         const barHeight = 30;
 
         const data = practiceStats.slice(0, 10);
+        const height = 60 * data.length;
         const svg = d3.select(chartRef.current)
             .select('#practice-stats-svg')
             .attr('width', '100%')
@@ -75,8 +75,6 @@ export default function StatsPage() {
             });
         }
         maxLabelWidth += 20; // Add some padding
-
-        console.log('Max label width:', maxLabelWidth);
 
         const xScale = d3.scaleLinear()
             .domain([-maxBoth, maxBoth])
