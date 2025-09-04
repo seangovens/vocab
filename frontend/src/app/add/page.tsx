@@ -13,6 +13,8 @@ import {
     Alert,
     Checkbox,
     Snackbar,
+    Box,
+    Divider,
 } from '@mui/material';
 import { Check } from '@mui/icons-material';
 import { WordEntry } from '../page';
@@ -110,20 +112,27 @@ export default function AddPage() {
 
     return (
     <Stack spacing={3}>
-        <Typography variant='h4'>Add a Word</Typography>
+        <form
+            id='wordEntryWrapper'
+            onSubmit={(e) => {
+                e.preventDefault();
+                if (!loading && word) handleLookup();
+            }} >
+            <TextField
+                label='Enter word'
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                disabled={loading} />
+            <Button
+                variant='contained'
+                type='submit'
+                onClick={handleLookup}
+                disabled={loading || !word}>
+                Lookup Definitions
+            </Button>
+        </form>
 
-        <TextField
-            label='Word'
-            value={word}
-            onChange={(e) => setWord(e.target.value)}
-            disabled={loading} />
-
-        <Button
-            variant='contained'
-            onClick={handleLookup}
-            disabled={loading || !word}>
-            Lookup Definition
-        </Button>
+        <Divider />
 
         {
         error && 
@@ -139,30 +148,29 @@ export default function AddPage() {
         }
 
         {definitions.length > 0 && (
-            <>
-            {/* TODO: pick up to three definitions to save? */}
-            <Paper elevation={3} sx={{ padding: 2 }}>
-                <Typography variant='h6'>Definitions:</Typography>
-                <List>
-                {definitions.map((def, i) => (
-                    <ListItem
-                        key={i}
-                        secondaryAction={
-                            <Checkbox
-                                edge='end'
-                                checked={selectedIndices.includes(i)}
-                                onChange={() => handleToggle(i)}
-                                disabled={
-                                    !selectedIndices.includes(i) && selectedIndices.length >= 3
-                                } />
-                        } >
-                        <ListItemText
-                            primary={`Definition ${i}: ${def.definition}`}
-                            secondary={def.example ? `Example: ${def.example}` : null} />
-                    </ListItem>
-                ))}
-                </List>
-            </Paper>
+        <>
+            <Typography variant='h6'>
+                Definitions:
+            </Typography>
+            <List>
+            {definitions.map((def, i) => (
+                <ListItem
+                    key={i}
+                    secondaryAction={
+                        <Checkbox
+                            edge='end'
+                            checked={selectedIndices.includes(i)}
+                            onChange={() => handleToggle(i)}
+                            disabled={
+                                !selectedIndices.includes(i) && selectedIndices.length >= 3
+                            } />
+                    } >
+                    <ListItemText
+                        primary={`Definition ${i}: ${def.definition}`}
+                        secondary={def.example ? `Example: ${def.example}` : null} />
+                </ListItem>
+            ))}
+            </List>
 
             <Button
                 variant="outlined"
@@ -170,8 +178,7 @@ export default function AddPage() {
                 disabled={loading || selectedIndices.length == 0} >
                 Save to Database
             </Button>
-            </>
-        )}
+        </>)}
         </Stack>
     );
 }
