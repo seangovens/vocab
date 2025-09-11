@@ -3,6 +3,7 @@
 import { Box, Grid, Paper, Typography, useTheme } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import PageNavigation from '@/components/pageNavigation';
 
 type PracticeStat = {
     word: string;
@@ -21,6 +22,9 @@ export default function StatsPage() {
     const [practiceStats, setPracticeStats] = useState<PracticeStat[]>([]);
     const [summary, setSummary] = useState<StatsSummary | null>(null);
     const chartRef = useRef<HTMLDivElement>(null);
+    const sections = useRef<HTMLDivElement[]>([]);
+    const [currentSection, setCurrentSection] = useState<number>(0);
+    const [isScrolling, setIsScrolling] = useState<boolean>(false);
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/stats`)
@@ -42,7 +46,7 @@ export default function StatsPage() {
         const data = practiceStats.slice(0, 10);
         const height = 60 * data.length;
         const svg = d3.select(chartRef.current)
-            .select('#practice-stats-svg')
+            .select('#practiceStatsSvg')
             .attr('width', '100%')
             .attr('height', height)
             .attr('viewBox', `0 0 ${width} ${height}`);
@@ -116,11 +120,11 @@ export default function StatsPage() {
             .style('fill', 'var(--foreground)')
             .text((d: PracticeStat) => d.word);
 
-        svg.selectAll('.practice-label')
+        svg.selectAll('.practiceLabel')
             .data(data)
             .enter()
             .append('text')
-            .attr('class', 'practice-label')
+            .attr('class', 'practiceLabel')
             .attr('x', xScale(0))
             .attr('y', (_: PracticeStat, i: number) => yScale(i*rowPad) + barHeight / 2 + 20)
             .attr('text-anchor', 'middle')
@@ -129,60 +133,127 @@ export default function StatsPage() {
             .text((d: PracticeStat) => `practiced ${d.correct + d.incorrect} times`);
     }, [practiceStats]);
 
+    const scrollToSection = (index: number) => {
+        if (isScrolling) return;
+        setIsScrolling(true);
+        setCurrentSection(index);
+
+        const targetSection = sections.current[index];
+        if (!targetSection) return;
+
+        targetSection.scrollIntoView({ behavior: 'smooth' });
+
+        // const targetPosition = targetSection.offsetTop;
+        
+        // window.scrollTo({
+        //     top: targetPosition,
+        //     behavior: 'smooth'
+        // });
+
+        setTimeout(() => setIsScrolling(false), 1000);
+    };
+    const scrollToSectionRef = useRef(scrollToSection);
+    scrollToSectionRef.current = scrollToSection;
+
+    useEffect(() => {
+        const handleScroll = (e: WheelEvent) => {
+            console.log('handleScroll called');
+            e.preventDefault();
+
+            if (isScrolling) return;
+            
+            const direction = e.deltaY > 0 ? 1 : -1;
+            console.log('Scroll direction:', direction);
+            console.log('Current section index:', currentSection);
+            const nextSection = currentSection + direction;
+            console.log('Next section index:', nextSection);
+
+            if (nextSection >= 0 && nextSection < sections.current.length) {
+                scrollToSectionRef.current(nextSection);
+            }
+        };
+
+        window.addEventListener('wheel', handleScroll, { passive: false });
+        return () => window.removeEventListener('wheel', handleScroll);
+    }, [currentSection, isScrolling]);
+
     return (
-        <Box>
-            <Typography
-                variant='h4'
-                align='center'
-                gutterBottom >
-                Vocabulary Statistics
-            </Typography>
+        <Box id='statisticsContainer' >
+
+            <PageNavigation 
+                showUp={currentSection > 0}
+                showDown={currentSection < sections.current.length - 1}
+                onUp={() => scrollToSectionRef.current(currentSection - 1)}
+                onDown={() => scrollToSectionRef.current(currentSection + 1)} />
 
             {/* Summary boxes */}
-            <Grid
-                container
-                spacing={3}
-                justifyContent='center' >
-                <Grid>
-                    <Paper>
-                        <Typography variant='h5' >Streak</Typography>
-                        <Typography
-                            variant='h3'
-                            color='primary' >
-                            {summary ? summary.streak : '--'}
-                        </Typography>
-                        <Typography variant='body2' >days in a row</Typography>
-                    </Paper>
+            <Box
+                ref={(el: HTMLDivElement | null) => {
+                    if (el) sections.current[0] = el;
+                }}
+                className='statsSection'
+                sx={{
+                    bgcolor: theme.palette.background.default
+                }} >
+                <Grid
+                    id='summaryBoxes'
+                    container
+                    spacing={3}
+                    justifyContent='center'
+                    alignItems='center' >
+                    <Grid>
+                        <Paper>
+                            <Typography variant='h5' >Streak</Typography>
+                            <Typography
+                                variant='h3'
+                                color='primary' >
+                                {summary ? summary.streak : '--'}
+                            </Typography>
+                            <Typography variant='body2' >days in a row</Typography>
+                        </Paper>
+                    </Grid>
+                    <Grid>
+                        <Paper>
+                            <Typography variant='h5' >Words</Typography>
+                            <Typography
+                                variant='h3'
+                                color='primary' >
+                                {summary ? summary.wordCount : '--'}
+                            </Typography>
+                            <Typography variant='body2' >in database</Typography>
+                        </Paper>
+                    </Grid>
+                    <Grid>
+                        <Paper>
+                            <Typography variant="h5">Most Recent</Typography>
+                            <Typography
+                                variant='h6'
+                                color='secondary' >
+                                {summary ? summary.mostRecent : '--'}
+                            </Typography>
+                            <Typography variant='body2' >last added</Typography>
+                        </Paper>
+                    </Grid>
                 </Grid>
-                <Grid>
-                    <Paper>
-                        <Typography variant='h5' >Words</Typography>
-                        <Typography
-                            variant='h3'
-                            color='primary' >
-                            {summary ? summary.wordCount : '--'}
-                        </Typography>
-                        <Typography variant='body2' >in database</Typography>
-                    </Paper>
-                </Grid>
-                <Grid>
-                    <Paper>
-                        <Typography variant="h5">Most Recent</Typography>
-                        <Typography
-                            variant='h6'
-                            color='secondary' >
-                            {summary ? summary.mostRecent : '--'}
-                        </Typography>
-                        <Typography variant='body2' >last added</Typography>
-                    </Paper>
-                </Grid>
-            </Grid>
+            </Box>
 
             {/* Practice stats chart */}
             <Box
-                ref={chartRef}
-                id='practice-stats-chart' >
-                <svg id='practice-stats-svg' />
+                ref={(el: HTMLDivElement | null) => {
+                    if (el) sections.current[1] = el;
+                }}
+                className='statsSection' >
+                <Typography
+                    variant="h4"
+                    gutterBottom
+                    align="center" >
+                    Most Practiced Words
+                </Typography>
+                <Box
+                    ref={chartRef}
+                    id='practiceStatsChart' >
+                    <svg id='practiceStatsSvg' />
+                </Box>
             </Box>
         </Box>
     );

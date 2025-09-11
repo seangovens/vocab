@@ -21,7 +21,9 @@ export default function RootLayout({ children } : { children: React.ReactNode })
         <body>
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <AppBar position='static'>
+            <AppBar
+                position='fixed'
+                sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }} >
                 <Toolbar>
                     <Tabs
                         value={tabValue}
@@ -45,7 +47,15 @@ export default function RootLayout({ children } : { children: React.ReactNode })
                     </Tabs>
                 </Toolbar>
             </AppBar>
-            <Container sx={{ mt: 4 }}>{children}</Container>
+            <Toolbar /> {/* Spacer for fixed AppBar */}
+            <Container
+                sx={{
+                    mt: 4,
+                    position: 'relative',
+                    minHeight: 'calc(100vh - 64px)'
+                }} >
+                {children}
+            </Container>
         </ThemeProvider>
         </body>
     </html>

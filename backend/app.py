@@ -203,15 +203,9 @@ def get_stats():
             "correct": d["correct"]
         } for d in practice_stats_rows]
 
-    print("Here are practice stats:")
-    print(practice_stats)
-
     # Get total word count
     cur.execute("SELECT COUNT(DISTINCT word) FROM words")
     word_count = cur.fetchone()["count"]
-
-    print("Here is the word count:")
-    print(word_count)
 
     # Get streak
     cur.execute("""
