@@ -16,6 +16,9 @@ export type WordEntry = {
     word: string;
     definition: string;
     example?: string;
+    partOfSpeech?: string;
+    types?: string[];
+    part_of_speech?: string;
 };
 
 export default function PracticePage() {
@@ -84,6 +87,7 @@ export default function PracticePage() {
                     variant='body1'
                     gutterBottom >
                     {word.definition}
+                    {word.types?.length ? ` (${word.types.join(', ')})` : ''}
                 </Typography>
 
                 {/* Only show example if it exists and answer is revealed */}
