@@ -106,6 +106,11 @@ def home():
     return "Vocab lookup"
 
 
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
+
+
 @app.route("/lookup", methods=["POST"])
 def lookup():
     db = get_db()
