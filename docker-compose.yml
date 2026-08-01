@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   frontend:
-    image: vocab:latest
+    image: vocab-frontend:latest
     ports:
       - "3000:80"
     depends_on:
