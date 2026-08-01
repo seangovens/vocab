@@ -34,9 +34,12 @@ export default function AddPage() {
         setEditing(false);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lookup`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/lookup`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || 'dev-token',
+                },
                 body: JSON.stringify({ word }),
             });
 
@@ -80,9 +83,12 @@ export default function AddPage() {
         setError('');
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/add`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/add`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || 'dev-token',
+                },
                 body: JSON.stringify({
                     word,
                     definitions: selectedIndices.map((v: number) => definitions[v]) 

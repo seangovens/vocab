@@ -38,7 +38,11 @@ export default function PracticePage() {
         setSelected(null);
         setError('');
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getrandom`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/getrandom`, {
+                headers: {
+                    'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || 'dev-token',
+                },
+            });
             const data = await res.json();
             if (!res.ok) {
                 setError(data.error || 'Error loading words');
@@ -63,9 +67,12 @@ export default function PracticePage() {
         if (!word) return;
         setSelected(resp);
         const correct = resp === word.word;
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/practice`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/practice`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || 'dev-token',
+            },
             body: JSON.stringify({ word_id: word.id, correct }),
         });
     }

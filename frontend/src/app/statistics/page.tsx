@@ -23,7 +23,11 @@ export default function StatsPage() {
     const chartRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/stats`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/stats`, {
+            headers: {
+                'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || 'dev-token',
+            },
+        })
             .then(res => res.json())
             .then((data) => {
                 console.log('Here is the practice data:');

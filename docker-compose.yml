@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: /api
+        NEXT_PUBLIC_API_TOKEN: ${API_TOKEN:-dev-token}
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - API_TOKEN=${API_TOKEN:-dev-token}
+      - DATABASE_URL=sqlite:///data/vocab.db
