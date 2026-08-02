@@ -139,7 +139,7 @@ def lookup():
 
     try:
         for meaning in result[0]["meanings"]:
-            part_of_speech = meaning.get("part_of_speech") or ""
+            part_of_speech = meaning.get("partOfSpeech") or meaning.get("part_of_speech") or ""
             for definition in meaning["definitions"]:
                 definitions.append({
                     "definition": definition["definition"],
