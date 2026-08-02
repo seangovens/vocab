@@ -34,11 +34,11 @@ export default function AddPage() {
         setEditing(false);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/lookup`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/lookup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || 'dev-token',
+                    'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || '',
                 },
                 body: JSON.stringify({ word }),
             });
@@ -83,11 +83,11 @@ export default function AddPage() {
         setError('');
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/add`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/add`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || 'dev-token',
+                    'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || '',
                 },
                 body: JSON.stringify({
                     word,

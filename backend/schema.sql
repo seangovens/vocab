@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS words (
     word TEXT NOT NULL,
     definition TEXT,
     example TEXT,
+    part_of_speech TEXT,
     date_added TEXT DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(word, definition)
 );

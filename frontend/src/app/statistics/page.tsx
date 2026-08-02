@@ -25,7 +25,7 @@ export default function StatsPage() {
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/stats`, {
             headers: {
-                'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || 'dev-token',
+                'X-Api-Key': process.env.NEXT_PUBLIC_API_TOKEN || '',
             },
         })
             .then(res => res.json())
