@@ -2,6 +2,7 @@ import logging
 import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 
 import requests
 from flask import Flask, g, jsonify, request
@@ -54,18 +55,21 @@ def require_api_token():
 def get_db_path():
     database_url = os.environ.get("DATABASE_URL", "sqlite:///vocab.db")
     if database_url.startswith("sqlite://"):
-        if database_url.startswith("sqlite:///"):
-            path = database_url[len("sqlite:///") :]
-            if not path:
-                return os.path.join(os.path.dirname(__file__), "vocab.db")
-            if os.path.isabs(path):
-                return path
-            return os.path.join(os.path.dirname(__file__), path)
+        parsed = urlparse(database_url)
+        if parsed.scheme != "sqlite":
+            return database_url
 
-        relative_path = database_url[len("sqlite://") :]
-        if relative_path.startswith("/"):
-            return relative_path[1:]
-        return os.path.join(os.path.dirname(__file__), relative_path)
+        path = parsed.path
+        if not path:
+            return os.path.join(os.path.dirname(__file__), "vocab.db")
+
+        if parsed.netloc and parsed.netloc != "":
+            path = f"//{parsed.netloc}{path}"
+
+        if os.path.isabs(path):
+            return path
+
+        return os.path.join(os.path.dirname(__file__), path)
 
     return database_url
 
