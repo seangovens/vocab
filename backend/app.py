@@ -94,6 +94,11 @@ def init_db():
     db = get_db()
     with open(os.path.join(os.path.dirname(__file__), "schema.sql"), "r", encoding="utf-8") as schema_file:
         db.executescript(schema_file.read())
+
+    columns = [row[1] for row in db.execute("PRAGMA table_info(words)")]
+    if "part_of_speech" not in columns:
+        db.execute("ALTER TABLE words ADD COLUMN part_of_speech TEXT")
+
     db.commit()
 
 
@@ -134,10 +139,12 @@ def lookup():
 
     try:
         for meaning in result[0]["meanings"]:
+            part_of_speech = meaning.get("part_of_speech") or ""
             for definition in meaning["definitions"]:
                 definitions.append({
                     "definition": definition["definition"],
                     "example": definition.get("example"),
+                    "part_of_speech": part_of_speech,
                 })
     except (KeyError, IndexError, TypeError):
         return jsonify({"error": "Unexpected response format"}), 500
@@ -171,11 +178,12 @@ def add_word():
     for definition_entry in definitions:
         definition = definition_entry.get("definition", "")
         example = definition_entry.get("example", "")
+        part_of_speech = definition_entry.get("part_of_speech") or ""
 
         try:
             cur.execute(
-                "INSERT INTO words (word, definition, example, date_added) VALUES (?, ?, ?, ?)",
-                (word, definition, example, datetime.now(timezone.utc).isoformat()),
+                "INSERT INTO words (word, definition, example, part_of_speech, date_added) VALUES (?, ?, ?, ?, ?)",
+                (word, definition, example, part_of_speech, datetime.now(timezone.utc).isoformat()),
             )
             added_count += 1
         except sqlite3.Error as exc:
@@ -191,13 +199,14 @@ def get_random_choices():
     db = get_db()
     cur = db.cursor()
     cur.execute("""
-        SELECT id, word, definition, example, date_added
+        SELECT id, word, definition, example, part_of_speech, date_added
         FROM (
             SELECT
                 id,
                 word,
                 definition,
                 example,
+                part_of_speech,
                 date_added,
                 ROW_NUMBER() OVER (PARTITION BY word ORDER BY RANDOM()) AS rn
             FROM words
@@ -256,16 +265,17 @@ def get_stats():
 
     cur = db.cursor()
     cur.execute("""
-        SELECT word, SUM(COALESCE(incorrect, 0)) as incorrect, SUM(COALESCE(correct, 0)) as correct
+        SELECT words.word, words.part_of_speech, SUM(COALESCE(incorrect, 0)) as incorrect, SUM(COALESCE(correct, 0)) as correct
         FROM practice_logs
         JOIN words ON practice_logs.word_id = words.id
-        GROUP BY word
+        GROUP BY words.word, words.part_of_speech
         ORDER BY (SUM(COALESCE(incorrect, 0)) + SUM(COALESCE(correct, 0))) DESC
     """)
     practice_stats_rows = cur.fetchall()
     practice_stats = [
         {
             "word": row["word"],
+            "part_of_speech": row["part_of_speech"],
             "incorrect": row["incorrect"],
             "correct": row["correct"],
         }

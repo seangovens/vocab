@@ -16,10 +16,12 @@ export type WordEntry = {
     word: string;
     definition: string;
     example?: string;
-    partOfSpeech?: string;
-    types?: string[];
     part_of_speech?: string;
 };
+
+function trimString(value?: string): string {
+    return value ? value.trim() : '';
+}
 
 export default function PracticePage() {
     const theme = useTheme();
@@ -32,6 +34,7 @@ export default function PracticePage() {
     const [word, setWord] = useState<WordEntry | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [answerChoices, setAnswerChoices] = useState<WordEntry[]>([]);
 
     const fetchWords = async () => {
         setLoading(true);
@@ -48,10 +51,32 @@ export default function PracticePage() {
                 setError(data.error || 'Error loading words');
                 setWord(null);
             } else {
-                // Generate a random index in data to select correct word
                 const correctIndex = Math.floor(Math.random() * data.length);
-                setWord(data[correctIndex]);
-                setResponses(data.map((entry: WordEntry) => entry.word));
+                const correctEntry = data[correctIndex] as WordEntry;
+                const samePartOfSpeechEntries = data.filter((entry: WordEntry) => {
+                    const correctPos = trimString(correctEntry.part_of_speech);
+                    const entryPos = trimString(entry.part_of_speech);
+                    if (!correctPos || !entryPos) {
+                        return true;
+                    }
+                    return correctPos.toLowerCase() === entryPos.toLowerCase();
+                });
+
+                console.log('Correct entry:', correctEntry);
+                console.log('Same part of speech entries:', samePartOfSpeechEntries);
+
+                const distractorPool = samePartOfSpeechEntries.length >= 2
+                    ? samePartOfSpeechEntries
+                    : data;
+                const shuffledChoices = [...distractorPool]
+                    .filter((entry: WordEntry) => entry.word !== correctEntry.word)
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, 3);
+
+                const choices = [correctEntry, ...shuffledChoices].sort(() => Math.random() - 0.5);
+                setWord(correctEntry);
+                setAnswerChoices(choices);
+                setResponses(choices.map((entry: WordEntry) => entry.word));
             }
         } 
         catch (e) {
@@ -94,7 +119,7 @@ export default function PracticePage() {
                     variant='body1'
                     gutterBottom >
                     {word.definition}
-                    {word.types?.length ? ` (${word.types.join(', ')})` : ''}
+                    {trimString(word.part_of_speech) ? ` (${trimString(word.part_of_speech)})` : ''}
                 </Typography>
 
                 {/* Only show example if it exists and answer is revealed */}

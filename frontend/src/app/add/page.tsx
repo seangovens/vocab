@@ -163,7 +163,7 @@ export default function AddPage() {
                                 } />
                         } >
                         <ListItemText
-                            primary={`Definition ${i}: ${def.definition}${def.partOfSpeech ? ` (${def.partOfSpeech})` : ''}`}
+                            primary={`Definition ${i}: ${def.definition}${def.part_of_speech ? ` (${def.part_of_speech.trim()})` : ''}`}
                             secondary={def.example ? `Example: ${def.example}` : null} />
                     </ListItem>
                 ))}
