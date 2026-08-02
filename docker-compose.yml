@@ -16,3 +16,8 @@ services:
       - FLASK_ENV=production
       - API_TOKEN=${API_TOKEN:-dev-token}
       - DATABASE_URL=sqlite:///data/vocab.db
+    volumes:
+      - backend_data:/data
+
+volumes:
+  backend_data:
